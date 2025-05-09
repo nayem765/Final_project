@@ -115,15 +115,27 @@ void runHeatEquation2D(int N, double dt, double total_time, int snapshots) {
 #endif
 
         // Forward Euler update
-        for (int i = 1; i < N - 1; ++i) {
-            for (int j = 1; j < N - 1; ++j) {
-                u_new[i][j] = u[i][j] + r * (
-                    u[i+1][j] + u[i-1][j] +
-                    u[i][j+1] + u[i][j-1] -
-                    4 * u[i][j]
-                );
-            }
+        #ifdef USE_MPI
+    for (int i = 1; i <= local_N; ++i) {
+        for (int j = 1; j < N - 1; ++j) {
+            u_new[i][j] = u[i][j] + r * (
+                u[i+1][j] + u[i-1][j] +
+                u[i][j+1] + u[i][j-1] -
+                4 * u[i][j]
+            );
         }
+    }
+#else
+    for (int i = 1; i < N - 1; ++i) {
+        for (int j = 1; j < N - 1; ++j) {
+            u_new[i][j] = u[i][j] + r * (
+                u[i+1][j] + u[i-1][j] +
+                u[i][j+1] + u[i][j-1] -
+                4 * u[i][j]
+            );
+        }
+    }
+#endif
 
         u.swap(u_new);
 
