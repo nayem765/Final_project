@@ -140,7 +140,23 @@ void runHeatEquation2D(int N, double dt, double total_time, int snapshots) {
         u.swap(u_new);
 
         if (step % steps_per_snapshot == 0) {
-            saveToFile(u, step);
-        }
+            #ifdef USE_MPI
+                std::ostringstream filename;
+                filename << "data/output/heat_rank" << rank << "_step" << std::setfill('0') << std::setw(4) << step << ".csv";
+                std::ofstream out(filename.str());
+            
+                // Write only real rows (not ghost rows)
+                for (int i = 1; i <= local_N; ++i) {
+                    for (int j = 0; j < N; ++j) {
+                        out << u[i][j];
+                        if (j + 1 < N) out << ",";
+                    }
+                    out << "\n";
+                }
+            #else
+                saveToFile(u, step);
+            #endif
+            }
+            
     }
 }
