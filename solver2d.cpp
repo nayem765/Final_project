@@ -32,6 +32,24 @@ void runHeatEquation2D(int N, double dt, double total_time, int snapshots) {
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (N % size != 0) {
+        if (rank == 0) {
+            std::cerr << "Grid size N must be divisible by number of processes.\n";
+        }
+        MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+
+    int local_N = N / size;        // Rows per process (not counting ghosts)
+    int global_N = N;
+    int start_row = rank * local_N;
+    int end_row = start_row + local_N;
+
+    // Add 2 extra rows for ghost cells
+    std::vector<std::vector<double>> u(local_N + 2, std::vector<double>(N, 0.0));
+    std::vector<std::vector<double>> u_new = u;
+#else
+    std::vector<std::vector<double>> u(N, std::vector<double>(N, 0.0));
+    std::vector<std::vector<double>> u_new = u;
     #endif
 
     double alpha = 1.0;  // thermal diffusivity
@@ -45,10 +63,7 @@ void runHeatEquation2D(int N, double dt, double total_time, int snapshots) {
 
     int steps_per_snapshot = static_cast<int>(total_time / dt / snapshots);
 
-    // Allocate and initialize 2D grid
-    std::vector<std::vector<double>> u(N, std::vector<double>(N, 0.0));
-    std::vector<std::vector<double>> u_new = u;
-
+    
     // Set initial condition: hot spot at center
     for (int i = 0; i < N; ++i) {
         for (int j = 0; j < N; ++j) {
