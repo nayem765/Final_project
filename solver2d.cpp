@@ -65,6 +65,18 @@ void runHeatEquation2D(int N, double dt, double total_time, int snapshots) {
 
     
     // Set initial condition: hot spot at center
+    #ifdef USE_MPI
+    for (int i = 1; i <= local_N; ++i) {  // skip ghost rows
+        int global_i = start_row + (i - 1);  // global row index
+        for (int j = 0; j < N; ++j) {
+            double x = global_i * dx;
+            double y = j * dy;
+            if (std::abs(x - 0.5) < 0.1 && std::abs(y - 0.5) < 0.1) {
+                u[i][j] = 100.0;
+            }
+        }
+    }
+#else
     for (int i = 0; i < N; ++i) {
         for (int j = 0; j < N; ++j) {
             double x = i * dx;
@@ -74,6 +86,8 @@ void runHeatEquation2D(int N, double dt, double total_time, int snapshots) {
             }
         }
     }
+#endif
+
 
     // Ensure output directory exists
     fs::create_directories("data/output");
