@@ -1,4 +1,5 @@
 #include "solver2d.hpp"
+#include "wtime.hpp"  // Include the wtime header for timing
 #include <vector>
 #include <iostream>
 #include <cmath>
@@ -32,6 +33,8 @@ void runHeatEquation2D(int N, double dt, double total_time, int snapshots) {
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+    double t_start = wtime();  // ✅ Start the timer
+
     if (N % size != 0) {
         if (rank == 0) {
             std::cerr << "Grid size N must be divisible by number of processes.\n";
@@ -158,4 +161,9 @@ void runHeatEquation2D(int N, double dt, double total_time, int snapshots) {
             }
             
     }
+    #ifdef USE_MPI
+    double t_end = wtime();
+    std::cout << "Rank " << rank << " finished in " << (t_end - t_start) << " seconds.\n";
+#endif
+
 }
