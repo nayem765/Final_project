@@ -6,6 +6,9 @@
 #include <fstream>
 #include <sstream>
 #include <filesystem>  // C++17 filesystem support
+#ifdef USE_MPI
+#include <mpi.h>
+#endif
 
 namespace fs = std::filesystem;
 
@@ -25,6 +28,12 @@ void saveToFile(const std::vector<std::vector<double>>& u, int step) {
 }
 
 void runHeatEquation2D(int N, double dt, double total_time, int snapshots) {
+        #ifdef USE_MPI
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    #endif
+
     double alpha = 1.0;  // thermal diffusivity
     double dx = 1.0 / (N - 1);
     double dy = dx;
