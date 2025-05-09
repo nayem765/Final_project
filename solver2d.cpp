@@ -94,6 +94,26 @@ void runHeatEquation2D(int N, double dt, double total_time, int snapshots) {
 
     int total_steps = static_cast<int>(total_time / dt);
     for (int step = 0; step <= total_steps; ++step) {
+        #ifdef USE_MPI
+    // Send top real row to upper neighbor, receive ghost row from below
+    if (rank < size - 1) {
+        MPI_Sendrecv(
+            u[local_N].data(), N, MPI_DOUBLE, rank + 1, 0,
+            u[local_N + 1].data(), N, MPI_DOUBLE, rank + 1, 0,
+            MPI_COMM_WORLD, MPI_STATUS_IGNORE
+        );
+    }
+
+    // Send bottom real row to lower neighbor, receive ghost row from above
+    if (rank > 0) {
+        MPI_Sendrecv(
+            u[1].data(), N, MPI_DOUBLE, rank - 1, 1,
+            u[0].data(), N, MPI_DOUBLE, rank - 1, 1,
+            MPI_COMM_WORLD, MPI_STATUS_IGNORE
+        );
+    }
+#endif
+
         // Forward Euler update
         for (int i = 1; i < N - 1; ++i) {
             for (int j = 1; j < N - 1; ++j) {
